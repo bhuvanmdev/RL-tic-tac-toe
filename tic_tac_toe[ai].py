@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from matplotlib import pyplot as plt
 from IPython import display
+import math
 
 random.seed(42)
 class TicTacToe:
@@ -74,14 +75,14 @@ class TicTacToe:
 
 
 class Q_learning:
-    def __init__(self, letter, rand=False,alpha=0.3 , gamma=0.9):
+    def __init__(self, letter, rand=False,alpha=0.25 , gamma=0.9):
         self.alpha = alpha
         self.gamma = gamma
         self.q = {}
         self.cur_board = None
         self.cur_move = None
         self.letter = letter
-        self.epsilon = 0.9
+        self.epsilon = 200 # make it 0 during infernece
         self.rand = rand
 
     def convert_board_to_num_array(self, board):
@@ -92,7 +93,9 @@ class Q_learning:
 
     def move(self, game: TicTacToe):
         state = self.convert_board_to_num_array(game.board)
-        if random.random() < self.epsilon -(10-game.size**0.5)*(game.x_wins + game.o_wins + game.tie) or self.rand:
+        if self.rand == None:
+            action = int(input("Enter the position: "))
+        elif random.randint(1,200) < self.epsilon - game.x_wins-game.tie   or self.rand == True:
             action = random.choice(game.available_moves())
         else:
             q_values = np.array([self.get_q(state, action) for action in game.available_moves()])
@@ -103,23 +106,23 @@ class Q_learning:
 
     def update_q(self, game: TicTacToe):
         reward = 0
-        if self.rand:return
+        if self.rand or self.rand is None:return
         if game.current_winner == self.letter:
-            reward = 5
+            reward = 1
             # game.x_wins += 1 if self.letter == 'X' else 0
             # game.o_wins += 1 if self.letter == 'O' else 0
         elif game.current_winner == 'T':
-            reward = -2.5
+            reward = -10
             # game.tie += 1
         elif game.current_winner and game.current_winner != 'T':
-            reward = -5
+            reward = -10
             # game.x_wins += 0 if self.letter == 'X' else 1
             # game.o_wins += 0 if self.letter == 'O' else 1
         new_state = self.convert_board_to_num_array(game.board.copy())
         if game.available_moves().__len__() != 0:
             q_values = np.array([self.get_q(new_state, action) for action in game.available_moves()])
             # print(q_values,game.available_moves())
-            new_q = reward + self.gamma * np.max(q_values) # missed - self.get_q(self.cur_board, self.cur_move)
+            new_q = reward + self.gamma * np.max(q_values)  - self.get_q(self.cur_board, self.cur_move)
         else:
             new_q = reward
         self.q[(self.cur_board, self.cur_move)] = self.get_q(self.cur_board, self.cur_move) + self.alpha * new_q
@@ -134,7 +137,7 @@ class Q_learning:
         for key in self.q:
             print(key, self.q[key])
 
-
+# more negative reward is better than more positive reward
 #steps to use a q-learning agent
 #1. create a game object
 #2. create a q-learning object
@@ -142,19 +145,22 @@ class Q_learning:
 #4. update the q-learning object
 
 if __name__ == '__main__':
-    game = TicTacToe(5)
-    plt.ion()
+    game = TicTacToe(3)
+    # plt.ion()
     X_agent = Q_learning('X')
+    # X_agent.load_q(r"E:\re_inforcement_learning\qtablefirst.pth")
     O_agent = Q_learning('O')
-    O_agent.rand = True
+    # O_agent.rand = None # make it none to user playable and True for random agent
     x_score = []
     o_score = []
     tie_score = []
     record = [0,0,0]
-    for i in range(50000):
-        first = random.choice([X_agent, O_agent])
+    for i in range(5_00_000):
+        # first = random.choice([X_agent, O_agent])
+        first = X_agent
         second = X_agent if first == O_agent else O_agent
         game.reset()
+        # game.print_board()
         while True:
             while True:
                 actionfirst = first.move(game)
@@ -166,6 +172,7 @@ if __name__ == '__main__':
                 game.tie += 1 if game.current_winner == 'T' else 0
                 first.update_q(game)
                 break
+            # game.print_board()
             while True:    
                 secondaction = second.move(game)
                 if game.make_move(secondaction, second.letter):break
@@ -176,30 +183,33 @@ if __name__ == '__main__':
                 game.tie += 1 if game.current_winner == 'T' else 0
                 second.update_q(game)
                 break
-        game.prev_game_store()
-        record = [max(record[0],game.x_wins/(game.o_wins+game.tie+game.x_wins)),max(record[1],game.tie/(game.o_wins+game.tie+game.x_wins)),max(record[2],game.o_wins/(game.o_wins+game.tie+game.x_wins))]
-        x_score.append(game.x_wins/(game.o_wins+game.tie+game.x_wins))
-        o_score.append(game.o_wins/(game.o_wins+game.tie+game.x_wins))
-        tie_score.append(game.tie/(game.o_wins+game.tie+game.x_wins))
-        display.clear_output(wait=True)
-        display.display(plt.gcf())
-        plt.clf()
-        plt.title('Training...')
-        plt.xlabel('Number of Games')
-        plt.ylabel('Score')
-        plt.plot(x_score)
-        plt.plot(o_score)
-        plt.plot(tie_score)
-        plt.legend(['X','O','Tie'])
-        plt.ylim(ymin=0)
-        plt.show(block=False)
-        #exit when q is pressed
-        if plt.waitforbuttonpress(0.000001):
-            break
+            # game.print_board()
+
+        if i%10000 == 0:
+            print(f"i={i}",game.x_wins/(game.o_wins+game.tie+game.x_wins),game.o_wins/(game.o_wins+game.tie+game.x_wins),game.tie/(game.o_wins+game.tie+game.x_wins))
+        # game.prev_game_store()
+        # record = [max(record[0],game.x_wins/(game.o_wins+game.tie+game.x_wins)),max(record[1],game.tie/(game.o_wins+game.tie+game.x_wins)),max(record[2],game.o_wins/(game.o_wins+game.tie+game.x_wins))]
+        # x_score.append(game.x_wins/(game.o_wins+game.tie+game.x_wins))
+        # o_score.append(game.o_wins/(game.o_wins+game.tie+game.x_wins))
+        # tie_score.append(game.tie/(game.o_wins+game.tie+game.x_wins))
+        # display.clear_output(wait=True)
+        # plt.clf()
+        # plt.title(f'Training...{game.x_wins+game.tie}')
+        # plt.xlabel('Number of Games')
+        # plt.ylabel('Score')
+        # plt.plot(x_score)
+        # plt.plot(o_score)
+        # plt.plot(tie_score)
+        # plt.legend([f'X-{(game.x_wins/(game.x_wins+game.tie+game.o_wins))*100}',f'O-{(game.o_wins/(game.o_wins+game.tie+game.x_wins))*100}',f'Tie-{(game.tie/(game.o_wins+game.tie+game.x_wins))*100}'])
+        # plt.ylim(ymin=0)
+        # plt.show(block=False)
+        # #exit when q is pressed
+        # if plt.waitforbuttonpress(0.000001):
+        #     break
 
 
-
-    print(record,set(game.prev_game).__len__())
+    # X_agent.save_q(r"E:\re_inforcement_learning\qtablefirst.pth")
+    print(game.x_wins/(game.o_wins+game.tie+game.x_wins),game.o_wins/(game.o_wins+game.tie+game.x_wins),game.tie/(game.o_wins+game.tie+game.x_wins),len(X_agent.q))#,set(game.prev_game).__len__())
 
     
 
