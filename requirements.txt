@@ -1,0 +1,6 @@
+ipython==8.27.0
+matplotlib==3.9.2
+matplotlib-inline==0.1.7
+numpy==2.1.1
+pillow==10.4.0
+torch==2.4.1
