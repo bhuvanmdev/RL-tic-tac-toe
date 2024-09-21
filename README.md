@@ -9,7 +9,7 @@
 pip install -r requirements.txt
 python "tic_tac_toe[ai].py"
 ```
-# results
+# results for table based q-learning
 The game can be played for any numbered sqaures, to make it simpler we play it in a simlpe 3X3. 
 ### 1) <u>When Agent plays against an agent and agentX always plays first</u>
 
@@ -23,9 +23,9 @@ reward -> 1 if we win and -1 for draw and loosing
 
 ![alt text](./matplotlibs/agentX.png)
 #### <u>observation</u>:- 
-When given the opurtunity for x to always play first, There seems to a bias for first player, due to which X easily learns to win a similar agent playing second.
+When given the opportunity for x to always play first, There seems to a bias for first player, due to which X easily learns to win, even aganist a similar agent, playing second.
 
-### 2) <u>When Agent plays against an agent and first player is choosen randomly</u>
+### 2) <u>When Agent plays against an agent and first player is chosen randomly</u>
 
 hyper-parameters same as the previous one.
 ![alt text](./matplotlibs/agentXO.png)
