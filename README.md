@@ -10,7 +10,7 @@ pip install -r requirements.txt
 python "tic_tac_toe[ai].py"
 ```
 # results
-
+The game can be played for any numbered sqaures, to make it simpler we play it in a simlpe 3X3. 
 ### 1) <u>When Agent plays against an agent and agentX always plays first</u>
 
 alpha = 0.25
