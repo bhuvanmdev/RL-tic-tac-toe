@@ -1,5 +1,14 @@
 ## Q learing with neural netowrks, but with only optimized q table.
 
+# Steps to run the code
+1) Clone the repository
+2) Install the requirements using the command 
+3) Play around the hyper-parameters in the code to see the results.
+4) Run the code using the command
+```bash
+pip install -r requirements.txt
+python "tic_tac_toe[ai].py"
+```
 # results
 
 ### 1) <u>When Agent plays against an agent and agentX always plays first</u>
