@@ -26,6 +26,7 @@ class TicTacToe:
 
     def make_move(self, square, letter):
         if self.board[square] == ' ':
+            # print("inside make move")
             self.board[square] = letter
             if self._winner(square, letter):
                 self.current_winner = letter

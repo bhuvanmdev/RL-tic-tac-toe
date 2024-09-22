@@ -20,7 +20,7 @@ class Q_learning:
     def get_q(self, state, action):
         return self.q.get((state, action),0)
 
-    def move(self, game ):
+    def get_action(self, game ):
         state = self.convert_board_to_num_array(game.board)
         if self.rand == None:
             action = int(input("Enter the position: "))

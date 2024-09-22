@@ -3,8 +3,9 @@ from matplotlib import pyplot as plt
 from IPython import display
 from game import TicTacToe
 from qtagent import Q_learning
+import torch
 random.seed(42)
-
+torch.manual_seed(42)
 # more negative reward is better than more positive reward
 #steps to use a q-learning agent
 #1. create a game object
@@ -15,7 +16,7 @@ random.seed(42)
 if __name__ == '__main__':
     game = TicTacToe(3)
     # plt.ion()
-    X_agent = Q_learning('X')
+    X_agent = Q_learning('X',dqn_mode=True)
     # X_agent.load_q(r"E:\re_inforcement_learning\x.pth")
     O_agent = Q_learning('O')
     O_agent.rand = True # make it none to user playable and True for random agent
@@ -30,29 +31,31 @@ if __name__ == '__main__':
         game.reset()
         while True:
             while True:
-                actionfirst = first.move(game)
+                actionfirst = first.get_action(game)
                 if game.make_move(actionfirst, first.letter):break
-            second.update_q(game)
+            second.update(game)
             if game.current_winner is not None:
                 game.x_wins += 1 if game.current_winner == 'X' else 0
                 game.o_wins += 1 if game.current_winner == 'O' else 0
                 game.tie += 1 if game.current_winner == 'T' else 0
-                first.update_q(game)
+                first.update(game)
                 break
             # game.print_board()
+            print(789)
             while True:    
-                secondaction = second.move(game)
+                secondaction = second.get_action(game)
+                print(secondaction)
                 if game.make_move(secondaction, second.letter):break
-            first.update_q(game)
+            first.update(game)
             if game.current_winner is not None:
                 game.x_wins += 1 if game.current_winner == 'X' else 0
                 game.o_wins += 1 if game.current_winner == 'O' else 0
                 game.tie += 1 if game.current_winner == 'T' else 0
-                second.update_q(game)
+                second.update(game)
                 break
             # game.print_board()
 
-        if i%10000 == 0:
+        if i%100 == 0:
             print(f"i={i}",game.x_wins/(game.o_wins+game.tie+game.x_wins),game.o_wins/(game.o_wins+game.tie+game.x_wins),game.tie/(game.o_wins+game.tie+game.x_wins))
         # game.prev_game_store()
         # record = [max(record[0],game.x_wins/(game.o_wins+game.tie+game.x_wins)),max(record[1],game.tie/(game.o_wins+game.tie+game.x_wins)),max(record[2],game.o_wins/(game.o_wins+game.tie+game.x_wins))]
