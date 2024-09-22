@@ -6,6 +6,9 @@ from collections import deque
 import random
 import numpy as np
 from game import TicTacToe
+from matplotlib import pyplot as plt
+from qtagent import Q_learning
+
 random.seed(42)
 torch.manual_seed(42)
 
@@ -19,14 +22,11 @@ class DNN(nn.Module):
         self.fc3 = nn.Linear(128, 9)
 
     def forward(self, inp):
-        # inp_clone = inp.clone().detach()
         x = F.relu(self.fc1(inp))
         x = F.relu(self.fc2(x))
-        # print(F.relu(self.fc3(x))*torch.where(inp==0.0,1.0,0.0))
         x = self.fc3(x)
         x[(inp != 0.0).nonzero(as_tuple=True)] = float('-inf')
-        # print(x,(inp_clone != 0.0).nonzero(as_tuple=True),inp)
-        x = F.softmax(x,dim=-1)
+        x = x
         return x
 
     def save(self, path):
@@ -39,22 +39,28 @@ class DQNAgent:
     def __init__(self, letter):
         self.model = DNN()
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
-        self.criterion = nn.CrossEntropyLoss()
+        self.criterion = nn.MSELoss()# nn.CrossEntropyLoss()
         self.memory = deque(maxlen=1000)
         self.cur_board = None
         self.cur_move = None
         self.letter = letter
+        self.epsilon = 0.1
 
     def convert_board_to_num_array(self, board):
         return tuple([1 if spot == 'X' else 0 if spot == ' ' else -1 for spot in board])
 
     def get_action(self, game):
-        self.model.eval()
         self.cur_board = self.convert_board_to_num_array(game.board)
-        q_values = self.model(self.list_to_tensor(self.cur_board))
-        action = torch.argmax(q_values).item()
-        # print(q_values)
-        self.cur_move = q_values.tolist()
+        if random.random() < self.epsilon:
+            action = random.choice(game.available_moves())
+            cur_move = [0]*9
+            cur_move[action] = 1
+            self.cur_move = cur_move
+        else:
+            self.model.eval()
+            q_values = self.model(self.list_to_tensor(self.cur_board))
+            action = torch.argmax(q_values).item()
+            self.cur_move = q_values.tolist()
         return action
 
     def train(self, x, q_modified):
@@ -112,15 +118,15 @@ class DQNAgent:
         # batch dat
 if __name__ == '__main__':
     game = TicTacToe(3)
-    # plt.ion()
+    plt.ion()
     X_agent = DQNAgent('X')
     # X_agent.load_q(r"E:\re_inforcement_learning\x.pth")
-    O_agent = DQNAgent('O')
+    O_agent = Q_learning('O')
     # O_agent.rand = True # make it none to user playable and True for random agent
     x_score = []    
     o_score = []
     tie_score = []
-    episodes = 2_00
+    episodes = 100_000
     for i in range(episodes):
         first = [X_agent, O_agent][(i+0)%2] #uncomment this line to make the game random
         # first = X_agent #uncomment this line to make the first player deterministic
@@ -162,9 +168,27 @@ if __name__ == '__main__':
                 second.update(game)
                 break
             # game.print_board()
-
-        if i%100 == 0:
+        x_score.append(game.x_wins/(game.o_wins+game.tie+game.x_wins))
+        o_score.append(game.o_wins/(game.o_wins+game.tie+game.x_wins))
+        tie_score.append(game.tie/(game.o_wins+game.tie+game.x_wins))
+        if i%1000 == 0:
             print(f"i={i}",game.x_wins/(game.o_wins+game.tie+game.x_wins),game.o_wins/(game.o_wins+game.tie+game.x_wins),game.tie/(game.o_wins+game.tie+game.x_wins))
-else:pass
+
+        # display.clear_output(wait=True)
+    # plt.clf()
+plt.title('Trained')
+plt.xlabel('Number of Games')
+plt.ylabel('Score %')
+plt.plot(x_score)
+plt.plot(o_score)
+plt.plot(tie_score)
+plt.legend([f'X-{(game.x_wins/(game.x_wins+game.tie+game.o_wins))*100}',f'O-{(game.o_wins/(game.o_wins+game.tie+game.x_wins))*100}',f'Tie-{(game.tie/(game.o_wins+game.tie+game.x_wins))*100}'])
+plt.ylim(ymin=0)
+plt.show(block=True)
+    #exit when q is pressed
+if plt.waitforbuttonpress(0.000001):pass
+    # break
+
+# else:pass
     # print(DNN()(torch.tensor([-1,1,0,0,0,-1,1,0,1]).float()))
     # print(torch.tensor([1,1,1,1,1,1,1,1,1]).float()*torch.tensor([0,1,1,1,0,1,1,1,1]).float())

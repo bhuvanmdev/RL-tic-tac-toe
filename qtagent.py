@@ -33,7 +33,7 @@ class Q_learning:
         self.cur_move = action
         return action
 
-    def update_q(self, game ):
+    def update(self, game ):
         reward = 0
         if self.rand or self.rand is None:return
         if game.current_winner == self.letter:
