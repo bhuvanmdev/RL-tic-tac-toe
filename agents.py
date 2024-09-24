@@ -9,28 +9,34 @@ import numpy as np
 
 BATCH_SIZE = 128
 
-class Q_learning:
-    def __init__(self, letter, rand=False,alpha=0.25 , gamma=0.95):
-        self.alpha = alpha
-        self.gamma = gamma
-        self.q = {}
+
+class Agent:
+    def __init__(self, letter,alpha,gamma,episilon):
+        self.letter = letter
         self.cur_board = None
         self.cur_move = None
-        self.letter = letter
-        self.epsilon = 200 # for 200 games there is randomness
-        self.rand = rand
+        self.epsilon = episilon # for 200 games there is randomness
+        self.alpha = alpha
+        self.gamma = gamma
 
     def convert_board_to_num_array(self, board):
         return tuple([1 if spot == 'X' else 0 if spot == ' ' else -1 for spot in board])
+    
+    def get_action(self, *args,**kwargs):pass
+
+    def update(self, *args,**kwargs):pass
+
+class Q_learning(Agent):
+    def __init__(self, letter,alpha=0.25 , gamma=0.95,episilon=200):
+        super().__init__(letter,alpha,gamma,episilon)
+        self.q = {}
 
     def get_q(self, state, action):
         return self.q.get((state, action),0)
 
     def get_action(self, game ):
         state = self.convert_board_to_num_array(game.board)
-        if self.rand == None:
-            action = int(input("Enter the position: "))
-        elif random.randint(1,200) < self.epsilon - game.x_wins-game.tie   or self.rand == True:
+        if random.randint(1,200) < self.epsilon - game.x_wins-game.tie:
             action = random.choice(game.available_moves())
         else:
             q_values = np.array([self.get_q(state, action) for action in game.available_moves()])
@@ -41,7 +47,6 @@ class Q_learning:
 
     def update(self, game ):
         reward = 0
-        if self.rand or self.rand is None:return
         if game.current_winner == self.letter:
             reward = 1
         elif game.current_winner == 'T':
@@ -67,19 +72,14 @@ class Q_learning:
         for key in self.q:
             print(key, self.q[key])
 
-class DQNAgent:
-    def __init__(self, letter,model):
+class DQNAgent(Agent):
+    def __init__(self, letter,model,lr=0.001 , gamma=0.95,episilon=200):
+        super().__init__(letter,lr,gamma,episilon)
         self.model = model
-        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
         self.criterion = nn.MSELoss()# the problem is regression like, so we use MSE
         self.memory = deque(maxlen=1000)
-        self.cur_board = None
-        self.cur_move = None
-        self.letter = letter
         self.epsilon = 200
-
-    def convert_board_to_num_array(self, board):
-        return tuple([1 if spot == 'X' else 0 if spot == ' ' else -1 for spot in board])
 
     def get_action(self, game):
         self.cur_board = self.convert_board_to_num_array(game.board)
@@ -123,7 +123,7 @@ class DQNAgent:
             q = reward
         else:
             self.model.eval()
-            q = reward + 0.9 * torch.max(self.model(next_board)).item() # found using the next state's best action.
+            q = reward + self.gamma * torch.max(self.model(next_board)).item() # found using the next state's best action.
         q_modified[torch.argmax(q_modified)] = q # give all legal moves the same q
         self.train(cur_board, q_modified)
         self.store(cur_board.tolist(), q_modified.tolist())
@@ -143,3 +143,10 @@ class DQNAgent:
         states = torch.tensor(states).float()
         q_modified = torch.tensor(q_modified).float()
         return self.train(states, q_modified)
+
+class RandomAgent(Agent):
+    def __init__(self, letter):
+        super().__init__(letter,0,0,0)
+
+    def get_action(self, game):
+        return random.choice(game.available_moves())

@@ -14,21 +14,26 @@ torch.manual_seed(42)
 #3. play the game
 #4. update the q-learning object
 
+"""Types of agents:
+    1. Q_learning(letter): Q-learning agent with letter as the player
+    2. DQNAgent(letter,model): DQN agent with letter as the player and model as the model
+    3. RandomAgent(letter): Random agent with letter as the player
+"""
+
 if __name__ == '__main__':
     board_size = 3
     game = TicTacToe(board_size)
     plt.ion()
     X_agent = DQNAgent('X',CNN_Model(board_size))
     # X_agent.load_q(r"E:\re_inforcement_learning\x.pth")
-    O_agent = DQNAgent('O',DNN(board_size))#Q_learning('O')
-    # O_agent.rand = True # make it none to user playable and True for random agent
+    O_agent = Q_learning('O')#DQNAgent('X',CNN_Model(board_size))
     x_score = []    
     o_score = []
     tie_score = []
-    episodes = 100_000
+    episodes = 100_00
     for i in range(episodes):
-        first = [X_agent, O_agent][(i+0)%2] #uncomment this line to make the game random
-        # first = X_agent #uncomment this line to make the first player deterministic
+        # first = [X_agent, O_agent][(i+1)%2] #uncomment this line to make the game random
+        first = X_agent #uncomment this line to make the first player deterministic
         second = X_agent if first == O_agent else O_agent
         game.reset()
         temp = 0
@@ -59,7 +64,7 @@ if __name__ == '__main__':
         x_score.append(game.x_wins/(game.o_wins+game.tie+game.x_wins))
         o_score.append(game.o_wins/(game.o_wins+game.tie+game.x_wins))
         tie_score.append(game.tie/(game.o_wins+game.tie+game.x_wins))
-        if (i+1)%100 == 0:
+        if (i+1)%1000 == 0:
             print(f"i={i}",game.x_wins/(game.o_wins+game.tie+game.x_wins),game.o_wins/(game.o_wins+game.tie+game.x_wins),game.tie/(game.o_wins+game.tie+game.x_wins))
 
 
